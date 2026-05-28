@@ -1,0 +1,44 @@
+# AI Agent & Local configs
+.opencode/
+.sisyphus/
+.secrets/
+
+# Python cache and environments
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+venv/
+.venv/
+myenv/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Large generated artifacts & directories
+data/
+results/
+graphify-out/
+
+# Frontend (Node.js/Next.js)
+frontend/node_modules/
+.next/
+frontend/.next/
+frontend/out/
+frontend/build/
+.npm/
+
+# OS/Editor files
+.DS_Store
+.vscode/
+.idea/
+
+# Misc generated files
+backend/package-lock.json
+frontend/tsconfig.tsbuildinfo
+
+# Logs
+*.log
+opencode.json

@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "podcast-live-captioning-backend"
+version = "0.1.0"
+description = "FastAPI-based universal live captioning and video intelligence backend"
+authors = [ { name = "Podcast Project Team" } ]
+license = { text = "MIT" }
+readme = "README.md"
+requires-python = ">=3.11"
