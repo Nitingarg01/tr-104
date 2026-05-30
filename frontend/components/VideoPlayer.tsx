@@ -327,62 +327,6 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPlayer(
           </div>
         )}
 
-        {/* ── YouTube-style caption overlay ── */}
-        {ccOn && (
-          <div
-            aria-live="polite"
-            className="absolute left-0 right-0 flex justify-center pointer-events-none z-10"
-            style={{
-              bottom: 12,
-              transition: 'opacity 350ms ease',
-              opacity: captionVisible ? 1 : 0,
-            }}
-          >
-            {captionWords.length > 0 && (
-              <div
-                style={{
-                  background: 'rgba(0, 0, 0, 0.55)',
-                  backdropFilter: 'blur(8px)',
-                  WebkitBackdropFilter: 'blur(8px)',
-                  borderRadius: 6,
-                  padding: '5px 16px 6px',
-                  maxWidth: '72%',
-                  textAlign: 'center',
-                  border: '1px solid rgba(255,255,255,0.06)',
-                }}
-              >
-                <p
-                  style={{
-                    color: 'rgba(255,255,255,0.95)',
-                    fontSize: 'clamp(12px, 1.6vw, 16px)',
-                    fontWeight: 500,
-                    lineHeight: 1.5,
-                    margin: 0,
-                    letterSpacing: '0.015em',
-                    textShadow: '0 1px 8px rgba(0,0,0,1), 0 0 2px rgba(0,0,0,0.8)',
-                    whiteSpace: 'normal',
-                    wordBreak: 'break-word',
-                  }}
-                >
-                  {captionWords.map((word, i) => (
-                    <span
-                      key={`${lastCaptionKey.current}-${i}`}
-                      style={{
-                        display: 'inline-block',
-                        marginRight: '0.28em',
-                        animation: `captionWord 220ms ease-out both`,
-                        animationDelay: `${Math.min(i * 55, 600)}ms`,
-                      }}
-                    >
-                      {word}
-                    </span>
-                  ))}
-                </p>
-              </div>
-            )}
-          </div>
-        )}
-
         {/* Big play icon flash on toggle */}
         {paused && videoLoaded && (
           <div
@@ -405,6 +349,58 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPlayer(
           </div>
         )}
       </div>
+
+      {/* ── Caption strip: lives BELOW the video, never covers content ── */}
+      {ccOn && (
+        <div
+          aria-live="polite"
+          style={{
+            background: 'rgba(0,0,0,0.92)',
+            // Animate height: collapses when no caption to avoid layout jump flash
+            minHeight: captionWords.length > 0 ? 36 : 0,
+            maxHeight: captionWords.length > 0 ? 72 : 0,
+            overflow: 'hidden',
+            transition: 'max-height 200ms ease, opacity 200ms ease, min-height 200ms ease',
+            opacity: captionWords.length > 0 && captionVisible ? 1 : 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: captionWords.length > 0 ? '5px 12% 6px' : 0,
+          }}
+        >
+          <p
+            style={{
+              margin: 0,
+              padding: 0,
+              textAlign: 'center',
+              fontSize: 'clamp(12px, 1.35vw, 15px)',
+              fontWeight: 600,
+              lineHeight: 1.45,
+              color: '#ffffff',
+              letterSpacing: '0.015em',
+              // Hard clamp to 2 lines max
+              display: '-webkit-box',
+              WebkitBoxOrient: 'vertical',
+              WebkitLineClamp: 2,
+              overflow: 'hidden',
+            }}
+          >
+            {captionWords.map((word, i) => (
+              <span
+                key={`${lastCaptionKey.current}-${i}`}
+                style={{
+                  display: 'inline-block',
+                  marginRight: '0.3em',
+                  animation: `captionWord 160ms ease-out both`,
+                  animationDelay: `${Math.min(i * 30, 350)}ms`,
+                }}
+              >
+                {word}
+              </span>
+            ))}
+          </p>
+        </div>
+      )}
 
       {/* ── Controls bar ── */}
       <div
@@ -624,10 +620,50 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPlayer(
             style={{ width: 64, accentColor: 'var(--accent-primary)', cursor: 'pointer' }}
           />
 
-          {/* Time */}
+          {/* Time display */}
           <span style={{ color: '#ccc', fontSize: 12, fontVariantNumeric: 'tabular-nums', marginLeft: 4 }}>
             {fmt(playerTime)} / {fmt(totalDuration)}
           </span>
+
+          {/* Current chapter name — like YouTube's "Chapter Name ›" in the controls bar */}
+          {(() => {
+            const activeSeg = segments.find(
+              (s) => playerTime >= s.start && playerTime < s.end
+            )
+            if (!activeSeg) return null
+            return (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  marginLeft: 8,
+                  padding: '2px 8px',
+                  background: 'rgba(255,255,255,0.08)',
+                  borderRadius: 4,
+                  cursor: 'pointer',
+                  maxWidth: 180,
+                  overflow: 'hidden',
+                }}
+                onClick={() => onSegmentClick?.(activeSeg.id)}
+                title={activeSeg.keyword}
+              >
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: 'rgba(255,255,255,0.75)',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                >
+                  {activeSeg.keyword}
+                </span>
+                <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', flexShrink: 0 }}>›</span>
+              </div>
+            )
+          })()}
 
           <div style={{ flex: 1 }} />
 

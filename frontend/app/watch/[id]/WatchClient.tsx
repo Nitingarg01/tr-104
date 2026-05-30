@@ -69,6 +69,24 @@ function formatTime(seconds: number): string {
   return `${pad(mins)}:${pad(sec)}`
 }
 
+/**
+ * Extract a clean single-sentence key idea from segment summary text.
+ * Handles both LLM-formatted output and raw transcript text stored as summary.
+ */
+function getKeyIdea(summary: string): string {
+  if (!summary) return ''
+  const clean = summary
+    .replace(/^\*\*(Topic|Key Points|References|Overview|Takeaway|Summary)\*\*:?\s*/gim, '')
+    .replace(/^(Topic|Key Points|References|Summary):\s*/gim, '')
+    .replace(/^[•\-\*]\s*/gm, '')
+    .trim()
+  const sentences = clean.split(/(?<=[.!?])\s+/)
+  const first = sentences.find(s => s.trim().length > 20) ?? clean
+  const trimmed = first.trim()
+  return trimmed.length > 115 ? trimmed.slice(0, 112) + '…' : trimmed
+}
+
+
 function formatDuration(seconds?: number): string {
   if (!seconds || !Number.isFinite(seconds)) return '00:00'
   const s = Math.max(0, Math.floor(seconds))
@@ -513,16 +531,20 @@ export default function WatchClient({ episodeId }: { episodeId: string }) {
                           </div>
                           {seg.summary && (
                             <div
-                              className="text-xs mt-1 line-clamp-3"
-                              style={{
-                                color: 'var(--text-muted)',
-                                lineHeight: 1.5,
-                                whiteSpace: 'pre-line',
-                              }}
+                              className="mt-1.5"
+                              style={{ lineHeight: 1.5 }}
                             >
-                              {highlightedKeyword
-                                ? highlightText(seg.summary, highlightedKeyword)
-                                : seg.summary.replace(/^\*\*(Topic|Key Points|References|Overview|Takeaway)\*\*/gm, '$1:')}
+                              <span
+                                className="text-xs"
+                                style={{
+                                  color: 'var(--text-muted)',
+                                  fontStyle: 'italic',
+                                }}
+                              >
+                                {highlightedKeyword
+                                  ? highlightText(getKeyIdea(seg.summary), highlightedKeyword)
+                                  : getKeyIdea(seg.summary)}
+                              </span>
                             </div>
                           )}
                           {seg.keywords.length > 0 && (

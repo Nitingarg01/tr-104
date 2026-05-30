@@ -13,20 +13,13 @@ logger = logging.getLogger(__name__)
 NIM_BASE = "https://integrate.api.nvidia.com/v1"
 DEFAULT_MODEL = "meta/llama-3.1-8b-instruct"
 
-SYSTEM_PROMPT = """You are a podcast segment analyst. Given a transcript segment, produce a crisp, information-dense summary using this exact format (no markdown, no asterisks):
-
-Topic: one-line topic here (max 12 words)
-• precise key point 1
-• precise key point 2
-• precise key point 3 (if needed)
-References: specific people, tools, numbers mentioned
+SYSTEM_PROMPT = """You are a podcast segment analyst. Your sole job: write ONE sentence (max 20 words) that captures the single most important idea in this segment.
 
 Rules:
-- Start with "Topic:" on its own line (plain text, no asterisks)
-- Follow with bullet points (using • character, not - or *)
-- End with "References:" line
-- NO markdown formatting, NO bold, NO headers, NO asterisks at all
-- Be precise. No filler. Every line must add information."""
+- Output ONLY the one sentence. Nothing else. No labels, no bullets, no topic line.
+- Plain text. No markdown, no asterisks, no bold.
+- Be specific — name the concept, tool, or insight. No vague phrases like 'the speaker discusses'.
+- If no clear idea exists, output: 'No clear topic identified.'"""
 
 FULL_SUMMARIZE_SYSTEM = """You are a podcast content analyst. Given the full transcript, produce a concise plain-text summary:
 
