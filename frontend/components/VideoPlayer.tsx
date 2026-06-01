@@ -50,6 +50,7 @@ function splitWords(text: string) {
 }
 
 const CC_STORAGE_KEY = 'vp_captions_on'
+const CC_POSITION_KEY = 'vp_captions_position'
 
 const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPlayer(
   {
@@ -93,6 +94,13 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPlayer(
     if (typeof window === 'undefined') return true
     const stored = localStorage.getItem(CC_STORAGE_KEY)
     return stored === null ? true : stored === '1'
+  })
+
+  // Caption position mode: 'over' = overlay on top of video, 'below' = strip below video
+  const [ccPosition, setCcPosition] = useState<'over' | 'below'>(() => {
+    if (typeof window === 'undefined') return 'over'
+    const stored = localStorage.getItem(CC_POSITION_KEY)
+    return stored === 'below' ? 'below' : 'over'
   })
 
   // Caption display state
@@ -199,6 +207,14 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPlayer(
     setCcOn((v) => {
       const next = !v
       localStorage.setItem(CC_STORAGE_KEY, next ? '1' : '0')
+      return next
+    })
+  }
+
+  const toggleCCPosition = () => {
+    setCcPosition((v) => {
+      const next = v === 'over' ? 'below' : 'over'
+      localStorage.setItem(CC_POSITION_KEY, next)
       return next
     })
   }
@@ -348,10 +364,67 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPlayer(
             </div>
           </div>
         )}
+
+        {/* Caption overlay — rendered on top of the video so it stays visible in fullscreen */}
+        {ccOn && (ccPosition === 'over' || fullscreen) && (
+          <>
+            <div
+              aria-live="polite"
+              style={{
+                position: 'absolute',
+                left: 0,
+                right: 0,
+                bottom: fullscreen ? '10%' : 16,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: fullscreen ? '10px 6%' : '6px 10%',
+                pointerEvents: 'none',
+                opacity: captionWords.length > 0 && captionVisible ? 1 : 0,
+                transition: 'opacity 180ms ease',
+                zIndex: 4,
+              }}
+            >
+              <p
+                style={{
+                  margin: 0,
+                  padding: fullscreen ? '8px 16px' : '4px 8px',
+                  textAlign: 'center',
+                  fontSize: fullscreen ? 'clamp(20px, 2.5vw, 32px)' : 'clamp(14px, 1.8vw, 20px)',
+                  fontFamily: '"Roboto", "Arial", sans-serif',
+                  fontWeight: 500,
+                  lineHeight: 1.4,
+                  color: '#ffffff',
+                  background: 'rgba(8, 8, 8, 0.75)',
+                  borderRadius: 4,
+                  display: '-webkit-box',
+                  WebkitBoxOrient: 'vertical',
+                  WebkitLineClamp: 2,
+                  overflow: 'hidden',
+                  maxWidth: '90%',
+                }}
+              >
+                {captionWords.map((word, i) => (
+                  <span
+                    key={`overlay-${lastCaptionKey.current}-${i}`}
+                    style={{
+                      display: 'inline-block',
+                      marginRight: '0.35em',
+                      animation: `captionWord 160ms ease-out both`,
+                      animationDelay: `${Math.min(i * 30, 350)}ms`,
+                    }}
+                  >
+                    {word}
+                  </span>
+                ))}
+              </p>
+            </div>
+          </>
+        )}
       </div>
 
       {/* ── Caption strip: lives BELOW the video, never covers content ── */}
-      {ccOn && (
+      {ccOn && ccPosition === 'below' && (
         <div
           aria-live="polite"
           style={{
@@ -687,6 +760,30 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPlayer(
           >
             CC
           </button>
+
+          {/* CC position toggle: 'over' video (shown in fullscreen) vs 'below' */}
+          {ccOn && (
+            <button
+              onClick={toggleCCPosition}
+              style={{
+                ...btnStyle,
+                background: 'transparent',
+                border: '1px solid rgba(255,255,255,0.25)',
+                borderRadius: 4,
+                padding: '2px 6px',
+                fontSize: 11,
+                fontWeight: 600,
+                letterSpacing: '0.02em',
+                color: 'rgba(255,255,255,0.85)',
+                transition: 'all 180ms ease',
+                minWidth: 30,
+              }}
+              aria-label="Toggle caption position"
+              title={ccPosition === 'over' ? 'Captions on video (shown in fullscreen) — click to move below' : 'Captions below video — click to overlay on video'}
+            >
+              {ccPosition === 'over' ? '⤓' : '⤒'}
+            </button>
+          )}
 
           {/* Speed */}
           <div style={{ position: 'relative' }}>
